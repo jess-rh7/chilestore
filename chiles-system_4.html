@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChileStore — Sistema de Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0d0b; --surface:#1a1714; --surface2:#242019; --border:#2e2920;
+  --accent:#c84b11; --accent2:#e8760a; --gold:#d4a843;
+  --text:#e8e0d4; --text2:#9a8f82; --text3:#5a524a;
+  --green:#4a7c59; --gb:#7acc95; --red:#8b3a2a; --rb:#e07060; --white:#f5f0e8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+.app{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;width:240px;height:100vh;z-index:10;overflow-y:auto;}
+.logo{padding:26px 24px 20px;border-bottom:1px solid var(--border);}
+.logo-mark{font-family:'Playfair Display',serif;font-size:21px;color:var(--white);}
+.logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-top:5px;}
+.nav{padding:10px 0;flex:1;}
+.nav-sec{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;padding:16px 24px 5px;}
+.nav-it{display:flex;align-items:center;gap:11px;padding:12px 24px;cursor:pointer;font-size:13.5px;color:var(--text2);transition:all 0.15s;border-left:2px solid transparent;}
+.nav-it:hover{color:var(--text);background:var(--surface2);}
+.nav-it.active{color:var(--white);border-left-color:var(--accent);background:var(--surface2);}
+.nav-badge{margin-left:auto;background:var(--accent);color:var(--white);border-radius:10px;padding:1px 7px;font-size:10px;font-family:'DM Mono',monospace;}
+.sb-enc{padding:15px 18px;border-top:1px solid var(--border);background:var(--surface2);}
+.sb-enc-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:9px;}
+.sb-enc-row{display:flex;align-items:center;gap:10px;}
+.sb-av{width:37px;height:37px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.sb-name{font-size:13px;color:var(--text);font-weight:500;}
+.sb-rol{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-top:2px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--gb);display:inline-block;animation:pulse 2s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* MAIN */
+.main{margin-left:240px;width:calc(100vw - 240px);min-width:0;overflow-x:hidden;}
+
+/* TOPBAR */
+.topbar{padding:22px 44px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--white);font-weight:400;}
+.page-sub{font-size:12px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace;}
+.topbar-actions{display:flex;gap:10px;flex-shrink:0;}
+
+/* BUTTONS */
+.btn{padding:10px 18px;border-radius:7px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all 0.15s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:var(--white);box-shadow:0 2px 8px rgba(200,75,17,0.22);}
+.btn-primary:hover{background:#d9561a;transform:translateY(-1px);box-shadow:0 3px 14px rgba(200,75,17,0.35);}
+.btn-sec{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-sec:hover{border-color:var(--text3);color:var(--white);}
+.btn-ok{background:rgba(74,124,89,0.18);color:var(--gb);border:1px solid rgba(74,124,89,0.35);}
+.btn-ok:hover{background:rgba(74,124,89,0.3);}
+.btn-del{background:rgba(139,58,42,0.18);color:var(--rb);border:1px solid rgba(139,58,42,0.35);}
+.btn-del:hover{background:rgba(139,58,42,0.32);}
+.btn-sm{padding:7px 13px;font-size:12px;border-radius:5px;}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:4px;}
+
+/* CONTENT */
+.content{padding:34px 44px;}
+.panel{display:none;} .panel.active{display:block;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:34px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px 22px;position:relative;overflow:hidden;transition:border-color .2s;}
+.stat-card:hover{border-color:var(--text3);}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);}
+.stat-num{font-family:'Playfair Display',serif;font-size:36px;color:var(--white);line-height:1;}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:8px;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.stat-ico{font-size:30px;position:absolute;top:20px;right:18px;opacity:0.1;}
+
+/* SECTION HEADER */
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sec-hd h3{font-size:15px;color:var(--white);font-weight:500;}
+
+/* TABLE */
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+th{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:13px 20px;text-align:left;border-bottom:1px solid var(--border);font-weight:400;white-space:nowrap;}
+td{padding:15px 20px;font-size:13px;border-bottom:1px solid rgba(46,41,32,0.5);color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,0.017);}
+.td-acts{display:flex;gap:6px;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;font-weight:500;white-space:nowrap;}
+.bg{background:rgba(74,124,89,0.2);color:var(--gb);border:1px solid rgba(74,124,89,0.3);}
+.br{background:rgba(139,58,42,0.2);color:var(--rb);border:1px solid rgba(139,58,42,0.3);}
+.bgold{background:rgba(212,168,67,0.15);color:var(--gold);border:1px solid rgba(212,168,67,0.25);}
+.bo{background:rgba(200,75,17,0.2);color:var(--accent2);border:1px solid rgba(200,75,17,0.3);}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.sw{position:relative;flex:1;min-width:180px;max-width:320px;}
+.sw input{padding-left:36px;width:100%;}
+.si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none;}
+.pills{display:flex;gap:7px;flex-wrap:wrap;}
+.pill{padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text2);font-family:'DM Mono',monospace;transition:all 0.15s;white-space:nowrap;}
+.pill:hover{border-color:var(--text3);color:var(--text);}
+.pill.active{background:var(--accent);border-color:var(--accent);color:var(--white);}
+
+/* FORMS */
+input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,75,17,0.1);}
+input::placeholder{color:var(--text3);}
+label{display:block;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+.fg{margin-bottom:17px;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.hint{font-size:11px;color:var(--text3);margin-top:5px;}
+select option{background:var(--surface2);}
+
+/* ESTADO VENTA */
+.badge-cancel{background:rgba(139,58,42,0.18);color:#e07060;border:1px solid rgba(139,58,42,0.35);}
+.badge-devol{background:rgba(212,168,67,0.15);color:var(--gold);border:1px solid rgba(212,168,67,0.3);}
+.btn-warn{background:rgba(212,168,67,0.14);color:var(--gold);border:1px solid rgba(212,168,67,0.3);}
+.btn-warn:hover{background:rgba(212,168,67,0.26);}
+tr.venta-cancelada td{opacity:0.48;}
+tr.venta-cancelada td:first-child{opacity:1;}
+
+/* AUTOCOMPLETE */
+.ac-wrap{position:relative;}
+.ac-drop{display:none;position:absolute;top:calc(100% + 5px);left:0;right:0;background:var(--surface);border:1px solid var(--accent);border-radius:9px;z-index:500;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.45);}
+.ac-drop.open{display:block;}
+.ac-group-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;padding:10px 14px 4px;}
+.ac-item{display:flex;align-items:center;gap:11px;padding:10px 14px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(46,41,32,0.4);}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.focused{background:var(--surface2);}
+.ac-item-ico{font-size:18px;width:24px;text-align:center;flex-shrink:0;}
+.ac-item-main{flex:1;min-width:0;}
+.ac-item-name{font-size:13px;color:var(--white);font-weight:500;}
+.ac-item-name mark{background:rgba(200,75,17,0.35);color:var(--white);border-radius:2px;padding:0 2px;}
+.ac-item-meta{font-size:11px;color:var(--text3);margin-top:1px;}
+.ac-item-tag{font-size:10px;font-family:'DM Mono',monospace;color:var(--accent2);background:rgba(200,75,17,0.12);border:1px solid rgba(200,75,17,0.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
+.ac-empty{padding:16px 14px;font-size:13px;color:var(--text3);text-align:center;}
+.ac-footer{padding:8px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:20px;}
+.ov.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:30px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
+.modal-title{font-family:'Playfair Display',serif;font-size:21px;color:var(--white);margin-bottom:4px;}
+.modal-sub{font-size:13px;color:var(--text3);margin-bottom:24px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+
+/* TOTAL BOX */
+.total-box{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.total-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;}
+.total-val{font-family:'Playfair Display',serif;font-size:28px;color:var(--white);}
+
+/* TOAST */
+#toasts{position:fixed;bottom:26px;right:26px;z-index:999;display:flex;flex-direction:column;gap:9px;}
+.toast{padding:12px 18px;border-radius:9px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;animation:slideUp .28s ease;max-width:300px;border:1px solid;}
+.ts{background:#1a2e22;color:var(--gb);border-color:rgba(74,124,89,0.4);}
+.te{background:#2e1a17;color:var(--rb);border-color:rgba(139,58,42,0.4);}
+.ti{background:#1f1c17;color:var(--gold);border-color:rgba(212,168,67,0.3);}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* CONFIRM */
+.confirm-box{background:var(--surface2);border:1px solid rgba(139,58,42,0.4);border-radius:9px;padding:18px;margin-bottom:20px;}
+.confirm-box p{font-size:14px;color:var(--text);line-height:1.6;}
+
+/* ENCARGADOS */
+.enc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.enc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px;transition:border-color .15s;}
+.enc-card:hover{border-color:var(--text3);}
+.enc-card.enc-on{border-color:var(--accent);background:rgba(200,75,17,0.035);}
+.enc-av{width:50px;height:50px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);}
+.enc-name{font-size:14px;color:var(--white);font-weight:500;}
+.enc-meta{font-size:12px;color:var(--text3);margin-top:3px;}
+.enc-since{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-top:4px;}
+.enc-acts{margin-left:auto;display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+
+/* TURNO BANNER */
+.turno-banner{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:18px;margin-bottom:26px;}
+.turno-av{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid rgba(200,75,17,0.4);flex-shrink:0;}
+
+/* RESUMEN */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:13px;margin-bottom:26px;}
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:17px 19px;}
+.res-top{font-size:14px;color:var(--white);font-weight:500;margin-bottom:11px;display:flex;align-items:center;gap:9px;}
+.res-row{display:flex;justify-content:space-between;margin-bottom:7px;}
+.res-k{font-size:12px;color:var(--text3);}
+.res-v{font-size:13px;color:var(--text);font-family:'DM Mono',monospace;}
+
+/* AVATAR PICKER */
+.av-grid{display:flex;gap:8px;flex-wrap:wrap;}
+.av-opt{font-size:25px;cursor:pointer;padding:5px 9px;border-radius:8px;border:2px solid transparent;transition:all .12s;}
+.av-opt:hover{background:var(--surface2);}
+.av-opt.sel{border-color:var(--accent);background:rgba(200,75,17,0.1);}
+
+/* MISC */
+.divider{height:1px;background:var(--border);margin:24px 0;}
+.tgold{color:var(--gold);} .tmuted{color:var(--text3);} .tgreen{color:var(--gb);}
+.fmono{font-family:'DM Mono',monospace;}
+.picante{color:var(--accent2);letter-spacing:-1px;}
+.stock-low{color:#e8a030;}
+.empty{text-align:center;padding:48px 20px;}
+.empty-ico{font-size:38px;opacity:0.28;margin-bottom:10px;}
+.empty-txt{font-size:14px;color:var(--text3);margin-bottom:14px;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<div class="app">
+
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">🌶 ChileStore</div>
+    <div class="logo-sub">Sistema de Gestión</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Principal</div>
+    <div class="nav-it active" onclick="nav('dashboard')"><span>◈</span> Dashboard</div>
+    <div class="nav-sec">Catálogo</div>
+    <div class="nav-it" onclick="nav('productos')">
+      <span>⊞</span> Productos <span class="nav-badge" id="b-prods">0</span>
+    </div>
+    <div class="nav-sec">Operación</div>
+    <div class="nav-it" onclick="nav('ventas')">
+      <span>↗</span> Ventas <span class="nav-badge" id="b-ventas">0</span>
+    </div>
+    <div class="nav-it" onclick="nav('encargados')"><span>◎</span> Encargados</div>
+  </nav>
+  <div class="sb-enc">
+    <div class="sb-enc-lbl">Encargado activo</div>
+    <div class="sb-enc-row">
+      <div class="sb-av" id="sb-av">🧑</div>
+      <div>
+        <div class="sb-name" id="sb-name">Sin asignar</div>
+        <div class="sb-rol"><span class="dot"></span><span id="sb-rol">—</span></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ════ MAIN ════ -->
+<main class="main">
+
+<!-- DASHBOARD -->
+<div id="panel-dashboard" class="panel active">
+  <div class="topbar">
+    <div><div class="page-title">Dashboard</div><div class="page-sub" id="fecha-hoy"></div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-sec" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-primary" onclick="openVenta()">＋ Nueva Venta</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="s-prods">0</div><div class="stat-lbl">Productos</div><div class="stat-ico">⊞</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-nv">0</div><div class="stat-lbl">Total Ventas</div><div class="stat-ico">↗</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-ing">$0</div><div class="stat-lbl">Ingresos Totales</div><div class="stat-ico">◈</div></div>
+      <div class="stat-card"><div class="stat-num" id="s-stk">0</div><div class="stat-lbl">Unidades en Stock</div><div class="stat-ico">▦</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;">
+      <div>
+        <div class="sec-hd"><h3>Últimas ventas</h3><button class="btn btn-sm btn-sec" onclick="nav('ventas')">Ver todas →</button></div>
+        <div class="tw"><table><thead><tr><th>#</th><th>Producto</th><th>Cant.</th><th>Total</th><th>Encargado</th><th>Hora</th></tr></thead><tbody id="tb-dash"></tbody></table></div>
+      </div>
+      <div>
+        <div class="sec-hd"><h3>⚠️ Stock bajo</h3></div>
+        <div class="tw"><table><thead><tr><th>Producto</th><th>Stock</th></tr></thead><tbody id="tb-stk-bajo"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTOS -->
+<div id="panel-productos" class="panel">
+  <div class="topbar">
+    <div><div class="page-title">Productos</div><div class="page-sub">Catálogo de chiles y derivados</div></div>
+    <div class="topbar-actions"><button class="btn btn-primary" onclick="openProducto()">＋ Agregar Producto</button></div>
+  </div>
+  <div class="content">
+    <div class="toolbar">
+      <div class="sw"><span class="si">⌕</span><input type="text" id="q-prod" placeholder="Buscar por nombre..." oninput="renderProds()"></div>
+      <div class="pills" id="pills-cat">
+        <div class="pill active" onclick="setCat(this,'')">Todos</div>
+        <div class="pill" onclick="setCat(this,'Seco')">🍂 Chile Seco</div>
+        <div class="pill" onclick="setCat(this,'Fresco')">🌶 Chile Fresco</div>
+        <div class="pill" onclick="setCat(this,'Molido')">🌪 Molido</div>
+        <div class="pill" onclick="setCat(this,'Especia')">🟤 Especia</div>
+        <div class="pill" onclick="setCat(this,'Semilla')">🌰 Semilla</div>
+        <div class="pill" onclick="setCat(this,'Salsa')">🫙 Salsa</div>
+        <div class="pill" onclick="setCat(this,'Otro')">📦 Otro</div>
+      </div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Producto</th><th>Categoría</th><th>Picante</th><th>Precio</th><th>Stock</th><th>Estado</th><th style="text-align:center">Acciones</th></tr></thead>
+      <tbody id="tb-prods"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- VENTAS -->
+<div id="panel-ventas" class="panel">
+  <div class="topbar">
+    <div><div class="page-title">Registro de Ventas</div><div class="page-sub">Historial completo de transacciones</div></div>
+    <div class="topbar-actions">
+      <button class="btn btn-sec" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-primary" onclick="openVenta()">＋ Nueva Venta</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="toolbar">
+      <div class="sw"><span class="si">⌕</span><input type="text" id="q-venta" placeholder="Buscar producto o encargado..." oninput="renderVentas()"></div>
+      <div class="pills" id="pills-enc"></div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Producto</th><th>Cant.</th><th>Precio U.</th><th>Total</th><th>Encargado</th><th>Fecha / Hora</th><th>Notas</th><th>Estado</th></tr></thead>
+      <tbody id="tb-ventas"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ENCARGADOS -->
+<div id="panel-encargados" class="panel">
+  <div class="topbar">
+    <div><div class="page-title">Encargados</div><div class="page-sub">Gestión del personal y turnos</div></div>
+    <div class="topbar-actions"><button class="btn btn-primary" onclick="openEnc()">＋ Agregar Encargado</button></div>
+  </div>
+  <div class="content">
+    <div class="turno-banner">
+      <div class="turno-av" id="t-av">🧑</div>
+      <div style="flex:1">
+        <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">Turno activo</div>
+        <div style="font-size:18px;color:var(--white);font-weight:500" id="t-name">Sin encargado asignado</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px" id="t-rol">Activa un encargado para comenzar el turno</div>
+      </div>
+      <button class="btn btn-sec" onclick="openTurno()">Cambiar turno</button>
+    </div>
+
+    <div class="sec-hd" style="margin-bottom:13px"><h3>Resumen de ventas por encargado</h3></div>
+    <div class="res-grid" id="res-grid"></div>
+    <div class="divider"></div>
+    <div class="sec-hd" style="margin-bottom:13px"><h3>Personal registrado</h3></div>
+    <div class="enc-grid" id="enc-grid"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ══ MODAL: Producto ══ -->
+<div class="ov" id="m-prod">
+  <div class="modal">
+    <div class="modal-title" id="mp-ttl">Nuevo Producto</div>
+    <div class="modal-sub">Completa los datos del producto</div>
+    <input type="hidden" id="mp-id">
+    <div class="fr">
+      <div class="fg">
+        <label>Nombre *</label>
+        <div class="ac-wrap">
+          <input type="text" id="mp-nombre" placeholder="Escribe para buscar sugerencias..." autocomplete="off" oninput="acInput(this.value)" onkeydown="acKey(event)" onfocus="acInput(this.value)">
+          <div class="ac-drop" id="ac-drop"></div>
+        </div>
+      </div>
+      <div class="fg"><label>Categoría</label><select id="mp-cat"><option value="Seco">🍂 Chile Seco</option><option value="Fresco">🌶 Chile Fresco</option><option value="Molido">🌪 Molido</option><option value="Especia">🟤 Especia</option><option value="Semilla">🌰 Semilla</option><option value="Salsa">🫙 Salsa</option><option value="Otro">📦 Otro</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Precio ($) *</label><input type="number" id="mp-precio" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="fg"><label>Stock</label><input type="number" id="mp-stock" placeholder="0" min="0"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Nivel de picante</label><select id="mp-pic"><option value="1">1 — Suave 🌶</option><option value="2">2 — Medio 🌶🌶</option><option value="3">3 — Picante 🌶🌶🌶</option><option value="4">4 — Muy picante 🌶🌶🌶🌶</option><option value="5">5 — Extremo 🌶🌶🌶🌶🌶</option></select></div>
+      <div class="fg"><label>Unidad</label><select id="mp-uni"><option value="kg">Kilogramo (kg)</option><option value="g">Gramo (g)</option><option value="pieza">Pieza</option><option value="manojo">Manojo</option><option value="litro">Litro</option><option value="bolsa">Bolsa</option></select></div>
+    </div>
+    <div class="fg"><label>Descripción (opcional)</label><textarea id="mp-desc" rows="2" placeholder="Notas adicionales..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeM('m-prod')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProducto()">💾 Guardar Producto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Venta ══ -->
+<div class="ov" id="m-venta">
+  <div class="modal">
+    <div class="modal-title">Registrar Venta</div>
+    <div class="modal-sub">Selecciona producto y cantidad</div>
+    <div class="fg">
+      <label>Producto *</label>
+      <select id="mv-prod" onchange="onProdVenta()"><option value="">— Seleccionar —</option></select>
+      <div class="hint" id="mv-hint"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Cantidad *</label><input type="number" id="mv-cant" placeholder="0" min="0.01" step="0.01" oninput="calcVenta()"></div>
+      <div class="fg"><label>Precio unitario ($)</label><input type="number" id="mv-precio" placeholder="0.00" min="0" step="0.01" oninput="calcVenta()"><div class="hint">Puedes ajustar si hay descuento</div></div>
+    </div>
+    <div class="total-box">
+      <span class="total-lbl">Total a cobrar</span>
+      <span class="total-val" id="mv-total">$0.00</span>
+    </div>
+    <div class="fg"><label>Notas (opcional)</label><input type="text" id="mv-notas" placeholder="Ej. Pago con tarjeta, entrega a domicilio..."></div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeM('m-venta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVenta()">✅ Registrar Venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Encargado ══ -->
+<div class="ov" id="m-enc">
+  <div class="modal">
+    <div class="modal-title" id="me-ttl">Nuevo Encargado</div>
+    <div class="modal-sub">Agrega un miembro del equipo</div>
+    <input type="hidden" id="me-id">
+    <div class="fg"><label>Nombre completo *</label><input type="text" id="me-nombre" placeholder="Nombre del encargado"></div>
+    <div class="fr">
+      <div class="fg"><label>Rol / Puesto</label><select id="me-rol"><option>Vendedor</option><option>Cajero</option><option>Encargado</option><option>Gerente</option></select></div>
+      <div class="fg"><label>Turno habitual</label><select id="me-turno"><option>Mañana</option><option>Tarde</option><option>Noche</option><option>Completo</option></select></div>
+    </div>
+    <div class="fg">
+      <label>Avatar</label>
+      <div class="av-grid" id="av-grid">
+        <span class="av-opt sel" onclick="pickAv(this,'🧑')">🧑</span>
+        <span class="av-opt" onclick="pickAv(this,'👩')">👩</span>
+        <span class="av-opt" onclick="pickAv(this,'👨')">👨</span>
+        <span class="av-opt" onclick="pickAv(this,'🧓')">🧓</span>
+        <span class="av-opt" onclick="pickAv(this,'👩‍🍳')">👩‍🍳</span>
+        <span class="av-opt" onclick="pickAv(this,'👨‍🍳')">👨‍🍳</span>
+        <span class="av-opt" onclick="pickAv(this,'🧑‍💼')">🧑‍💼</span>
+        <span class="av-opt" onclick="pickAv(this,'🌶')">🌶</span>
+      </div>
+      <input type="hidden" id="me-av" value="🧑">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeM('m-enc')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEnc()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Cambiar Turno ══ -->
+<div class="ov" id="m-turno">
+  <div class="modal">
+    <div class="modal-title">Cambiar Turno</div>
+    <div class="modal-sub">¿Quién está a cargo ahora?</div>
+    <div id="turno-list" style="display:flex;flex-direction:column;gap:9px;max-height:360px;overflow-y:auto;"></div>
+    <div class="modal-footer"><button class="btn btn-sec" onclick="closeM('m-turno')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Cancelar / Devolver Venta ══ -->
+<div class="ov" id="m-cancel-venta">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title" id="cv-title">Cancelar Venta</div>
+    <div class="modal-sub" id="cv-sub"></div>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:16px 18px;margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;color:var(--text3)">Producto</span>
+        <span style="font-size:13px;color:var(--white);font-weight:500" id="cv-prod"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;color:var(--text3)">Cantidad</span>
+        <span style="font-size:13px;color:var(--text);font-family:'DM Mono',monospace" id="cv-cant"></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--text3)">Total cobrado</span>
+        <span style="font-size:16px;color:var(--gold);font-family:'Playfair Display',serif" id="cv-total"></span>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Tipo de acción</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="cv-tipo-grid">
+        <div class="cv-tipo-opt selected" onclick="selectTipo(this,'cancelacion')" style="border:2px solid var(--accent);border-radius:9px;padding:14px;cursor:pointer;text-align:center;background:rgba(200,75,17,0.06);transition:all .15s;">
+          <div style="font-size:22px;margin-bottom:5px">🚫</div>
+          <div style="font-size:13px;color:var(--white);font-weight:500">Cancelación</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">Se anula la venta sin reintegrar stock</div>
+        </div>
+        <div class="cv-tipo-opt" onclick="selectTipo(this,'devolucion')" style="border:2px solid var(--border);border-radius:9px;padding:14px;cursor:pointer;text-align:center;transition:all .15s;">
+          <div style="font-size:22px;margin-bottom:5px">↩️</div>
+          <div style="font-size:13px;color:var(--white);font-weight:500">Devolución</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">El producto regresa al inventario</div>
+        </div>
+      </div>
+      <input type="hidden" id="cv-tipo" value="cancelacion">
+    </div>
+
+    <div class="fg">
+      <label>Motivo *</label>
+      <select id="cv-motivo">
+        <option value="">— Seleccionar motivo —</option>
+        <optgroup label="Cancelación">
+          <option value="Error en registro">Error en registro</option>
+          <option value="Cliente no pagó">Cliente no pagó</option>
+          <option value="Venta duplicada">Venta duplicada</option>
+          <option value="Precio incorrecto">Precio incorrecto</option>
+        </optgroup>
+        <optgroup label="Devolución">
+          <option value="Producto en mal estado">Producto en mal estado</option>
+          <option value="Producto incorrecto">Producto incorrecto</option>
+          <option value="Insatisfacción del cliente">Insatisfacción del cliente</option>
+          <option value="Otro">Otro</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Notas adicionales (opcional)</label>
+      <input type="text" id="cv-nota" placeholder="Describe el motivo con más detalle...">
+    </div>
+    <input type="hidden" id="cv-venta-id">
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeM('m-cancel-venta')">Cerrar</button>
+      <button class="btn btn-primary" onclick="confirmarCancelacion()">Confirmar acción</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Confirmar ══ -->
+<div class="ov" id="m-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">⚠️ Confirmar acción</div>
+    <div class="modal-sub" id="cf-sub"></div>
+    <div class="confirm-box"><p id="cf-msg"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="closeM('m-confirm')">Cancelar</button>
+      <button class="btn btn-del" id="cf-btn">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ DATA ══
+let prods = JSON.parse(localStorage.getItem('cs3_prods')||'[]');
+let ventas = JSON.parse(localStorage.getItem('cs3_ventas')||'[]');
+let encs  = JSON.parse(localStorage.getItem('cs3_encs')||'[]');
+let activo = JSON.parse(localStorage.getItem('cs3_activo')||'null');
+let avSel = '🧑';
+let catAct = '';
+let encAct = '';
+
+function save(){
+  localStorage.setItem('cs3_prods', JSON.stringify(prods));
+  localStorage.setItem('cs3_ventas', JSON.stringify(ventas));
+  localStorage.setItem('cs3_encs', JSON.stringify(encs));
+  localStorage.setItem('cs3_activo', JSON.stringify(activo));
+}
+
+// ══ UTILS ══
+const fmt = n => '$'+parseFloat(n||0).toFixed(2);
+const picanteIco = n => '🌶'.repeat(Math.max(1,parseInt(n)||1));
+function nowFull(){ return new Date().toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}); }
+function nowTime(){ return new Date().toLocaleString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:true}); }
+
+// ══ TOAST ══
+function toast(msg, type='s'){
+  const ic = {s:'✅',e:'❌',i:'ℹ️'};
+  const el = document.createElement('div');
+  el.className=`toast t${type}`;
+  el.innerHTML=`<span>${ic[type]||'✅'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+// ══ CONFIRM ══
+function confirm2(sub, msg, cb){
+  document.getElementById('cf-sub').textContent = sub;
+  document.getElementById('cf-msg').textContent = msg;
+  document.getElementById('cf-btn').onclick = ()=>{ closeM('m-confirm'); cb(); };
+  openM('m-confirm');
+}
+
+// ══ NAV ══
+function nav(p){
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  document.getElementById('panel-'+p).classList.add('active');
+  document.querySelectorAll('.nav-it').forEach(n=>{
+    n.classList.toggle('active', (n.getAttribute('onclick')||'').includes(`'${p}'`));
+  });
+  if(p==='dashboard') renderDash();
+  if(p==='productos') renderProds();
+  if(p==='ventas') renderVentas();
+  if(p==='encargados') renderEncs();
+}
+
+// ══ MODALS ══
+function openM(id){ document.getElementById(id).classList.add('open'); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }));
+
+// ══════════════════════════════
+// PRODUCTOS
+// ══════════════════════════════
+function openProducto(id=null){
+  const e = id ? prods.find(p=>p.id===id) : null;
+  document.getElementById('mp-ttl').textContent = e ? '✏️ Editar Producto' : '🌶 Nuevo Producto';
+  document.getElementById('mp-id').value   = e?.id||'';
+  document.getElementById('mp-nombre').value = e?.nombre||'';
+  document.getElementById('mp-precio').value = e?.precio||'';
+  document.getElementById('mp-stock').value  = e?.stock||'';
+  document.getElementById('mp-desc').value   = e?.desc||'';
+  document.getElementById('mp-cat').value    = e?.categoria||'Seco';
+  document.getElementById('mp-pic').value    = e?.picante||'1';
+  document.getElementById('mp-uni').value    = e?.unidad||'kg';
+  openM('m-prod');
+}
+
+function saveProducto(){
+  const nombre = document.getElementById('mp-nombre').value.trim();
+  const precio = parseFloat(document.getElementById('mp-precio').value);
+  if(!nombre){ toast('El nombre es obligatorio','e'); return; }
+  if(isNaN(precio)||precio<0){ toast('Ingresa un precio válido','e'); return; }
+  const stock = parseFloat(document.getElementById('mp-stock').value)||0;
+  const d = { nombre, precio, stock,
+    categoria: document.getElementById('mp-cat').value,
+    picante:   document.getElementById('mp-pic').value,
+    unidad:    document.getElementById('mp-uni').value,
+    desc:      document.getElementById('mp-desc').value.trim() };
+  const id = document.getElementById('mp-id').value;
+  if(id){
+    const idx = prods.findIndex(p=>p.id===parseInt(id));
+    prods[idx] = {...prods[idx],...d};
+    toast('Producto actualizado ✓');
+  } else {
+    prods.push({id:Date.now(),...d});
+    toast('Producto agregado al catálogo');
+  }
+  save(); closeM('m-prod'); renderProds(); updateStats();
+}
+
+function delProducto(id){
+  const p = prods.find(x=>x.id===id);
+  confirm2('Eliminar producto',`¿Eliminar "${p.nombre}"? Las ventas existentes no se verán afectadas.`,()=>{
+    prods = prods.filter(x=>x.id!==id);
+    save(); renderProds(); updateStats(); toast('Producto eliminado','i');
+  });
+}
+
+function setCat(el, cat){
+  document.querySelectorAll('#pills-cat .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); catAct=cat; renderProds();
+}
+
+function renderProds(){
+  const q = (document.getElementById('q-prod').value||'').toLowerCase();
+  const list = prods.filter(p=>p.nombre.toLowerCase().includes(q)&&(!catAct||p.categoria===catAct));
+  const tb = document.getElementById('tb-prods');
+  if(!list.length){
+    tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-ico">🌶</div><div class="empty-txt">${prods.length?'Sin resultados':'Agrega tu primer producto'}</div>${!prods.length?`<button class="btn btn-primary btn-sm" onclick="openProducto()">＋ Agregar producto</button>`:''}</div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = list.map(p=>{
+    const bajo = p.stock<=5;
+    return `<tr>
+      <td><div style="font-weight:500;color:var(--white)">${p.nombre}</div>${p.desc?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${p.desc}</div>`:''}</td>
+      <td><span class="badge bgold">${p.categoria}</span></td>
+      <td><span class="picante">${picanteIco(p.picante)}</span></td>
+      <td class="fmono">${fmt(p.precio)}<span style="font-size:10px;color:var(--text3)"> /${p.unidad}</span></td>
+      <td><span class="${bajo?'stock-low fmono':'fmono'}">${p.stock} ${p.unidad}${bajo?' ⚠️':''}</span></td>
+      <td><span class="badge ${p.stock>0?'bg':'br'}">${p.stock>0?'Disponible':'Agotado'}</span></td>
+      <td><div class="td-acts" style="justify-content:center">
+        <button class="btn btn-sm btn-sec" onclick="openProducto(${p.id})">✏️ Editar</button>
+        <button class="btn btn-sm btn-del" onclick="delProducto(${p.id})">🗑 Eliminar</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('b-prods').textContent = prods.length;
+}
+
+// ══════════════════════════════
+// VENTAS
+// ══════════════════════════════
+function openVenta(){
+  const disp = prods.filter(p=>p.stock>0);
+  const sel = document.getElementById('mv-prod');
+  sel.innerHTML = '<option value="">— Seleccionar producto —</option>' +
+    disp.map(p=>`<option value="${p.id}" data-p="${p.precio}" data-s="${p.stock}" data-u="${p.unidad}">${p.nombre} · Stock: ${p.stock} ${p.unidad}</option>`).join('');
+  if(!disp.length) sel.innerHTML = '<option value="">⚠️ Sin productos disponibles en stock</option>';
+  ['mv-cant','mv-precio','mv-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mv-total').textContent='$0.00';
+  document.getElementById('mv-hint').textContent='';
+  openM('m-venta');
+}
+
+function onProdVenta(){
+  const opt = document.getElementById('mv-prod').selectedOptions[0];
+  document.getElementById('mv-precio').value = opt?.dataset.p||'';
+  document.getElementById('mv-hint').textContent = opt?.dataset.s ? `Stock disponible: ${opt.dataset.s} ${opt.dataset.u}` : '';
+  calcVenta();
+}
+
+function calcVenta(){
+  const c = parseFloat(document.getElementById('mv-cant').value)||0;
+  const p = parseFloat(document.getElementById('mv-precio').value)||0;
+  document.getElementById('mv-total').textContent = fmt(c*p);
+}
+
+function saveVenta(){
+  const prodId = parseInt(document.getElementById('mv-prod').value);
+  const cant   = parseFloat(document.getElementById('mv-cant').value);
+  const precio = parseFloat(document.getElementById('mv-precio').value);
+  if(!prodId){ toast('Selecciona un producto','e'); return; }
+  if(!cant||cant<=0){ toast('La cantidad debe ser mayor a 0','e'); return; }
+  if(!precio||precio<=0){ toast('El precio debe ser mayor a 0','e'); return; }
+  const prod = prods.find(p=>p.id===prodId);
+  if(!prod){ toast('Producto no encontrado','e'); return; }
+  if(prod.stock<cant){ toast(`Stock insuficiente. Disponible: ${prod.stock} ${prod.unidad}`,'e'); return; }
+  prod.stock -= cant;
+  ventas.push({
+    id:Date.now(), prodId, prodNombre:prod.nombre,
+    cantidad:cant, unidad:prod.unidad, precio,
+    total:cant*precio,
+    encargado: activo?.nombre||'Sin asignar',
+    encId: activo?.id||null,
+    notas: document.getElementById('mv-notas').value.trim(),
+    fecha: nowFull()
+  });
+  save(); closeM('m-venta');
+  toast(`Venta registrada — ${fmt(cant*precio)}`);
+  renderDash(); renderVentas(); renderProds(); updateStats();
+}
+
+function openCancelVenta(id){
+  const v = ventas.find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('cv-venta-id').value = id;
+  document.getElementById('cv-prod').textContent  = v.prodNombre;
+  document.getElementById('cv-cant').textContent  = `${v.cantidad} ${v.unidad}`;
+  document.getElementById('cv-total').textContent = fmt(v.total);
+  document.getElementById('cv-motivo').value = '';
+  document.getElementById('cv-nota').value   = '';
+  // reset tipo a cancelacion
+  selectTipo(document.querySelector('.cv-tipo-opt'), 'cancelacion');
+  openM('m-cancel-venta');
+}
+
+function selectTipo(el, tipo){
+  document.querySelectorAll('.cv-tipo-opt').forEach(x=>{
+    x.style.borderColor   = 'var(--border)';
+    x.style.background    = 'transparent';
+  });
+  el.style.borderColor = tipo==='devolucion' ? 'var(--gold)' : 'var(--accent)';
+  el.style.background  = tipo==='devolucion' ? 'rgba(212,168,67,0.06)' : 'rgba(200,75,17,0.06)';
+  document.getElementById('cv-tipo').value = tipo;
+  document.getElementById('cv-title').textContent = tipo==='devolucion' ? '↩️ Devolución de Venta' : '🚫 Cancelar Venta';
+  document.getElementById('cv-sub').textContent   = tipo==='devolucion'
+    ? 'El stock del producto será reintegrado al inventario.'
+    : 'La venta quedará anulada. El stock no se modifica.';
+}
+
+function confirmarCancelacion(){
+  const id     = parseInt(document.getElementById('cv-venta-id').value);
+  const tipo   = document.getElementById('cv-tipo').value;
+  const motivo = document.getElementById('cv-motivo').value;
+  const nota   = document.getElementById('cv-nota').value.trim();
+  if(!motivo){ toast('Selecciona un motivo','e'); return; }
+  const v = ventas.find(x=>x.id===id);
+  if(!v) return;
+  // Marcar la venta como cancelada/devuelta en lugar de borrarla
+  v.estado   = tipo;
+  v.motivo   = motivo;
+  v.notaCancel = nota;
+  v.fechaCancel = nowFull();
+  // Si es devolución, reintegrar stock
+  if(tipo==='devolucion'){
+    const prod = prods.find(p=>p.id===v.prodId);
+    if(prod) prod.stock += v.cantidad;
+  }
+  save(); closeM('m-cancel-venta');
+  renderVentas(); renderDash(); renderProds(); updateStats();
+  toast(tipo==='devolucion' ? `Devolución registrada — stock reintegrado` : `Venta cancelada — ${v.prodNombre}`, 'i');
+}
+
+function setEncFiltro(el, val){
+  document.querySelectorAll('#pills-enc .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); encAct=val; renderVentas();
+}
+
+function renderVentas(){
+  // rebuild pills
+  const names = [...new Set(ventas.map(v=>v.encargado))];
+  document.getElementById('pills-enc').innerHTML =
+    `<div class="pill ${encAct===''?'active':''}" onclick="setEncFiltro(this,'')">Todos</div>`+
+    names.map(n=>`<div class="pill ${encAct===n?'active':''}" onclick="setEncFiltro(this,'${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+
+  const q = (document.getElementById('q-venta').value||'').toLowerCase();
+  const list = [...ventas].reverse().filter(v=>
+    (v.prodNombre.toLowerCase().includes(q)||v.encargado.toLowerCase().includes(q))&&
+    (!encAct||v.encargado===encAct)
+  );
+  const tb = document.getElementById('tb-ventas');
+  if(!list.length){
+    tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">${ventas.length?'Sin resultados para esa búsqueda':'Sin ventas registradas'}</div>${!ventas.length?`<button class="btn btn-primary btn-sm" onclick="openVenta()">＋ Nueva venta</button>`:''}</div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = list.map((v,i)=>{
+    const cancelada = v.estado==='cancelacion';
+    const devuelta  = v.estado==='devolucion';
+    const anulada   = cancelada || devuelta;
+    return `<tr class="${anulada?'venta-cancelada':''}">
+      <td class="fmono tmuted" style="font-size:11px">#${String(ventas.length-i).padStart(3,'0')}</td>
+      <td>
+        <div style="font-weight:500">${v.prodNombre}</div>
+        ${anulada ? `<div style="font-size:10px;margin-top:3px;font-family:'DM Mono',monospace;color:var(--text3)">${v.motivo}</div>` : ''}
+      </td>
+      <td class="fmono">${v.cantidad} ${v.unidad}</td>
+      <td class="fmono">${fmt(v.precio)}</td>
+      <td class="fmono" style="font-weight:500;${anulada?'text-decoration:line-through;color:var(--text3)':'color:var(--gold)'}">${fmt(v.total)}</td>
+      <td>${v.encargado}</td>
+      <td class="fmono tmuted" style="font-size:11px">${v.fecha}</td>
+      <td style="font-size:12px;color:var(--text3)">${v.notas||'—'}</td>
+      <td>
+        ${anulada
+          ? `<span class="badge ${cancelada?'badge-cancel':'badge-devol'}">${cancelada?'🚫 Cancelada':'↩️ Devuelta'}</span>`
+          : `<button class="btn btn-xs btn-warn" onclick="openCancelVenta(${v.id})">↩ Cancelar / Devolver</button>`
+        }
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('b-ventas').textContent = ventas.length;
+}
+
+// ══════════════════════════════
+// ENCARGADOS
+// ══════════════════════════════
+function pickAv(el, emoji){
+  document.querySelectorAll('.av-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel'); avSel=emoji;
+  document.getElementById('me-av').value=emoji;
+}
+
+function openEnc(id=null){
+  const e = id ? encs.find(x=>x.id===id) : null;
+  document.getElementById('me-ttl').textContent = e?'✏️ Editar Encargado':'👤 Nuevo Encargado';
+  document.getElementById('me-id').value     = e?.id||'';
+  document.getElementById('me-nombre').value   = e?.nombre||'';
+  document.getElementById('me-rol').value     = e?.rol||'Vendedor';
+  document.getElementById('me-turno').value   = e?.turno||'Mañana';
+  avSel = e?.avatar||'🧑';
+  document.getElementById('me-av').value = avSel;
+  document.querySelectorAll('.av-opt').forEach(x=>x.classList.toggle('sel', x.textContent===avSel));
+  openM('m-enc');
+}
+
+function saveEnc(){
+  const nombre = document.getElementById('me-nombre').value.trim();
+  if(!nombre){ toast('El nombre es obligatorio','e'); return; }
+  const id = document.getElementById('me-id').value;
+  const d = { nombre, rol:document.getElementById('me-rol').value, turno:document.getElementById('me-turno').value, avatar:avSel };
+  if(id){
+    const idx = encs.findIndex(e=>e.id===parseInt(id));
+    encs[idx]={...encs[idx],...d};
+    if(activo?.id===parseInt(id)) activo={...activo,...d};
+    toast('Encargado actualizado');
+  } else {
+    encs.push({id:Date.now(), desde:new Date().toLocaleDateString('es-MX'), ...d});
+    toast('Encargado agregado al equipo');
+  }
+  save(); closeM('m-enc'); renderEncs(); updateSidebar();
+}
+
+function delEnc(id){
+  const e = encs.find(x=>x.id===id);
+  confirm2('Eliminar encargado',`¿Eliminar a "${e.nombre}" del equipo?`,()=>{
+    encs=encs.filter(x=>x.id!==id);
+    if(activo?.id===id){ activo=null; updateSidebar(); }
+    save(); renderEncs(); toast('Encargado eliminado','i');
+  });
+}
+
+function setActivo(enc){
+  activo=enc; save(); updateSidebar(); renderEncs(); closeM('m-turno');
+  toast(`Turno activado — ${enc.nombre}`);
+}
+
+function openTurno(){
+  const list = document.getElementById('turno-list');
+  if(!encs.length){
+    list.innerHTML=`<div class="empty"><div class="empty-ico">👤</div><div class="empty-txt">No hay encargados registrados</div><button class="btn btn-primary btn-sm" onclick="closeM('m-turno');openEnc()">＋ Agregar encargado</button></div>`;
+  } else {
+    list.innerHTML = encs.map(e=>{
+      const on = activo?.id===e.id;
+      return `<div onclick="setActivo({id:${e.id},nombre:'${e.nombre.replace(/'/g,"\\'")}',avatar:'${e.avatar}',rol:'${e.rol}'})"
+        style="display:flex;align-items:center;gap:13px;padding:15px;background:var(--surface2);border:1px solid ${on?'var(--accent)':'var(--border)'};border-radius:10px;cursor:pointer;transition:all .15s;"
+        onmouseover="this.style.borderColor='var(--accent)'"
+        onmouseout="this.style.borderColor='${on?'var(--accent)':'var(--border)'}'">
+        <div style="font-size:26px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:9px">${e.avatar}</div>
+        <div style="flex:1"><div style="font-size:15px;color:var(--white);font-weight:500">${e.nombre}</div><div style="font-size:12px;color:var(--text3);margin-top:2px">${e.rol} · Turno ${e.turno}</div></div>
+        ${on?'<span style="font-size:11px;color:var(--accent);font-family:\'DM Mono\',monospace;font-weight:500">● ACTIVO</span>':''}
+      </div>`;
+    }).join('');
+  }
+  openM('m-turno');
+}
+
+function renderEncs(){
+  // Turno banner
+  document.getElementById('t-av').textContent   = activo?.avatar||'🧑';
+  document.getElementById('t-name').textContent  = activo?.nombre||'Sin encargado asignado';
+  document.getElementById('t-rol').textContent   = activo?`${activo.rol} — Turno activo`:'Activa un encargado para comenzar el turno';
+
+  // Resumen
+  const rg = document.getElementById('res-grid');
+  if(!encs.length){ rg.innerHTML=''; }
+  else {
+    rg.innerHTML = encs.map(e=>{
+      const mv = ventas.filter(v=>v.encId===e.id||v.encargado===e.nombre);
+      const tot = mv.reduce((a,v)=>a+v.total,0);
+      return `<div class="res-card">
+        <div class="res-top"><span style="font-size:22px">${e.avatar}</span>${e.nombre}
+          ${activo?.id===e.id?'<span class="badge bg" style="margin-left:auto;font-size:10px">● Activo</span>':''}
+        </div>
+        <div class="res-row"><span class="res-k">Ventas registradas</span><span class="res-v">${mv.length}</span></div>
+        <div class="res-row"><span class="res-k">Total vendido</span><span class="res-v tgold">${fmt(tot)}</span></div>
+        <div class="res-row"><span class="res-k">Turno habitual</span><span class="res-v">${e.turno}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  // Cards
+  const eg = document.getElementById('enc-grid');
+  if(!encs.length){
+    eg.innerHTML=`<div style="grid-column:1/-1"><div class="empty"><div class="empty-ico">👤</div><div class="empty-txt">Agrega encargados para comenzar</div><button class="btn btn-primary btn-sm" onclick="openEnc()">＋ Agregar encargado</button></div></div>`;
+  } else {
+    eg.innerHTML = encs.map(e=>`
+      <div class="enc-card ${activo?.id===e.id?'enc-on':''}">
+        <div class="enc-av">${e.avatar}</div>
+        <div style="flex:1;min-width:0">
+          <div class="enc-name">${e.nombre}</div>
+          <div class="enc-meta">${e.rol} · Turno ${e.turno}</div>
+          <div class="enc-since">Desde ${e.desde}</div>
+        </div>
+        <div class="enc-acts">
+          <button class="btn btn-xs btn-ok" onclick="setActivo({id:${e.id},nombre:'${e.nombre.replace(/'/g,"\\'")}',avatar:'${e.avatar}',rol:'${e.rol}'})">▶ Activar</button>
+          <button class="btn btn-xs btn-sec" onclick="openEnc(${e.id})">✏️ Editar</button>
+          <button class="btn btn-xs btn-del" onclick="delEnc(${e.id})">🗑 Eliminar</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// ══════════════════════════════
+// DASHBOARD
+// ══════════════════════════════
+function renderDash(){
+  const recientes = [...ventas].reverse().slice(0,8);
+  const td = document.getElementById('tb-dash');
+  if(!recientes.length){
+    td.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">Sin ventas aún</div><button class="btn btn-primary btn-sm" onclick="openVenta()">＋ Registrar venta</button></div></td></tr>`;
+  } else {
+    td.innerHTML = recientes.map((v,i)=>`
+      <tr>
+        <td class="fmono tmuted" style="font-size:11px">#${String(ventas.length-i).padStart(3,'0')}</td>
+        <td style="font-weight:500">${v.prodNombre}</td>
+        <td class="fmono">${v.cantidad} ${v.unidad}</td>
+        <td class="fmono tgold">${fmt(v.total)}</td>
+        <td>${v.encargado}</td>
+        <td class="fmono tmuted" style="font-size:11px">${v.fecha.split(',')[1]?.trim()||v.fecha}</td>
+      </tr>`).join('');
+  }
+
+  // Stock bajo
+  const bajo = [...prods].filter(p=>p.stock<=5).sort((a,b)=>a.stock-b.stock);
+  const ts = document.getElementById('tb-stk-bajo');
+  if(!bajo.length){
+    ts.innerHTML=`<tr><td colspan="2"><div class="empty" style="padding:24px"><div style="font-size:24px;opacity:0.3">✅</div><div class="empty-txt" style="margin-top:6px;margin-bottom:0">Todo en orden</div></div></td></tr>`;
+  } else {
+    ts.innerHTML = bajo.map(p=>`
+      <tr>
+        <td style="font-size:13px;font-weight:500">${p.nombre}</td>
+        <td><span class="badge ${p.stock===0?'br':'bo'}">${p.stock} ${p.unidad}</span></td>
+      </tr>`).join('');
+  }
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById('s-prods').textContent = prods.length;
+  document.getElementById('s-nv').textContent    = ventas.length;
+  document.getElementById('s-ing').textContent   = fmt(ventas.filter(v=>!v.estado).reduce((a,v)=>a+v.total,0));
+  document.getElementById('s-stk').textContent   = prods.reduce((a,p)=>a+p.stock,0);
+  document.getElementById('b-prods').textContent  = prods.length;
+  document.getElementById('b-ventas').textContent = ventas.length;
+}
+
+function updateSidebar(){
+  document.getElementById('sb-av').textContent   = activo?.avatar||'🧑';
+  document.getElementById('sb-name').textContent  = activo?.nombre||'Sin asignar';
+  document.getElementById('sb-rol').textContent   = activo?.rol||'—';
+}
+
+// ══════════════════════════════
+// EXPORTAR CSV
+// ══════════════════════════════
+function exportCSV(){
+  if(!ventas.length){ toast('No hay ventas para exportar','i'); return; }
+  const h = ['#','Producto','Cantidad','Unidad','Precio Unitario','Total','Encargado','Fecha','Notas'];
+  const r = [...ventas].reverse().map((v,i)=>[i+1,v.prodNombre,v.cantidad,v.unidad,v.precio.toFixed(2),v.total.toFixed(2),v.encargado,v.fecha,v.notas||'']);
+  const csv = [h,...r].map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = `ventas-chilestore-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); toast(`${ventas.length} ventas exportadas en CSV`);
+}
+
+// ══════════════════════════════
+// AUTOCOMPLETE DE PRODUCTOS
+// ══════════════════════════════
+const CATALOGO = [
+  // ── CHILES SECOS ──
+  {nombre:'Chile Ancho',           cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Suave',      desc:'Poblano seco, dulce y ligeramente ahumado'},
+  {nombre:'Chile Mulato',          cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Suave',      desc:'Oscuro, notas de chocolate y tierra'},
+  {nombre:'Chile Pasilla',         cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Suave',      desc:'Chilaca seco, sabor profundo y frutal'},
+  {nombre:'Chile Guajillo',        cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Medio',      desc:'Rojo brillante, base de moles y adobos'},
+  {nombre:'Chile Chipotle',        cat:'Seco',    pic:'3', uni:'kg',    ico:'🍂', tag:'Seco · Ahumado',    desc:'Jalapeño ahumado y seco, sabor intenso'},
+  {nombre:'Chile Morita',          cat:'Seco',    pic:'3', uni:'kg',    ico:'🍂', tag:'Seco · Ahumado',    desc:'Jalapeño pequeño ahumado, muy aromático'},
+  {nombre:'Chile Cascabel',        cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Suave',      desc:'Redondo, suena al agitarlo, sabor nuez'},
+  {nombre:'Chile de Árbol Seco',   cat:'Seco',    pic:'4', uni:'kg',    ico:'🍂', tag:'Seco · Muy picante',desc:'Seco e intenso, color rojo brillante'},
+  {nombre:'Chile Negro',           cat:'Seco',    pic:'3', uni:'kg',    ico:'🍂', tag:'Seco · Picante',    desc:'Color oscuro, sabor ahumado profundo'},
+  {nombre:'Chile Chilhuacle Negro',cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Oaxaqueño',  desc:'Base del mole negro oaxaqueño'},
+  {nombre:'Chile Chilhuacle Rojo', cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Oaxaqueño',  desc:'Para colorear moles y salsas rojas'},
+  {nombre:'Chile Piquín Seco',     cat:'Seco',    pic:'5', uni:'kg',    ico:'🍂', tag:'Seco · Extremo',    desc:'Pequeño y devastadoramente picante'},
+  {nombre:'Chile Costeño',         cat:'Seco',    pic:'3', uni:'kg',    ico:'🍂', tag:'Seco · Picante',    desc:'Delgado y rojo, típico de Oaxaca'},
+  {nombre:'Chile Puya',            cat:'Seco',    pic:'3', uni:'kg',    ico:'🍂', tag:'Seco · Picante',    desc:'Parecido al guajillo, más picante'},
+  {nombre:'Chile Mulato Seco',     cat:'Seco',    pic:'2', uni:'kg',    ico:'🍂', tag:'Seco · Dulce',      desc:'Base del mole poblano tradicional'},
+  // ── CHILES FRESCOS ──
+  {nombre:'Chile Jalapeño',        cat:'Fresco',  pic:'3', uni:'kg',    ico:'🌶', tag:'Fresco · Picante',  desc:'Verde o rojo, ideal para salsas y encurtidos'},
+  {nombre:'Chile Serrano',         cat:'Fresco',  pic:'3', uni:'kg',    ico:'🌶', tag:'Fresco · Picante',  desc:'Fresco y firme, muy usado en salsa verde'},
+  {nombre:'Chile Habanero',        cat:'Fresco',  pic:'5', uni:'kg',    ico:'🔥', tag:'Fresco · Extremo',  desc:'Naranja o rojo, de los más picantes del mundo'},
+  {nombre:'Chile Poblano',         cat:'Fresco',  pic:'2', uni:'kg',    ico:'🌿', tag:'Fresco · Suave',    desc:'Grande y carnoso, ideal para rellenar'},
+  {nombre:'Chile Manzano',         cat:'Fresco',  pic:'4', uni:'kg',    ico:'🌶', tag:'Fresco · Muy pic.', desc:'Amarillo o rojo, frutal y muy picante'},
+  {nombre:'Chile de Árbol Fresco', cat:'Fresco',  pic:'4', uni:'kg',    ico:'🌶', tag:'Fresco · Muy pic.', desc:'Verde brillante, intenso y aromático'},
+  {nombre:'Chile Güero',           cat:'Fresco',  pic:'2', uni:'kg',    ico:'🟡', tag:'Fresco · Suave',    desc:'Amarillo pálido, sabor suave y fresco'},
+  {nombre:'Chile Chilaca',         cat:'Fresco',  pic:'2', uni:'kg',    ico:'🌿', tag:'Fresco · Suave',    desc:'Alargado y oscuro, base del chile pasilla'},
+  // ── MOLIDOS ──
+  {nombre:'Chile Piquín Molido',   cat:'Molido',  pic:'5', uni:'g',     ico:'🌪', tag:'Molido · Extremo',  desc:'Polvo de piquín, sabor intenso y picante'},
+  {nombre:'Chile Guajillo Molido', cat:'Molido',  pic:'2', uni:'g',     ico:'🌪', tag:'Molido · Medio',    desc:'Polvo rojo brillante, para adobos y salsas'},
+  {nombre:'Chile Ancho Molido',    cat:'Molido',  pic:'2', uni:'g',     ico:'🌪', tag:'Molido · Suave',    desc:'Polvo ahumado y dulce, para marinadas'},
+  {nombre:'Chile Chipotle Molido', cat:'Molido',  pic:'3', uni:'g',     ico:'🌪', tag:'Molido · Ahumado',  desc:'Polvo ahumado, da cuerpo a guisos'},
+  {nombre:'Cayena Molida',         cat:'Molido',  pic:'4', uni:'g',     ico:'🌪', tag:'Molido · Muy pic.', desc:'Polvo de chile cayena, muy picante'},
+  {nombre:'Paprika Dulce',         cat:'Molido',  pic:'1', uni:'g',     ico:'🌪', tag:'Molido · Dulce',    desc:'Pimentón rojo molido, sin picante'},
+  {nombre:'Paprika Ahumada',       cat:'Molido',  pic:'1', uni:'g',     ico:'🌪', tag:'Molido · Ahumado',  desc:'Pimentón ahumado, sabor profundo'},
+  {nombre:'Chile Pasilla Molido',  cat:'Molido',  pic:'2', uni:'g',     ico:'🌪', tag:'Molido · Suave',    desc:'Para enchiladas y moles oscuros'},
+  // ── ESPECIAS ──
+  {nombre:'Comino en Grano',       cat:'Especia', pic:'1', uni:'g',     ico:'🟤', tag:'Especia · Semilla', desc:'Indispensable en guisos y carnes'},
+  {nombre:'Comino Molido',         cat:'Especia', pic:'1', uni:'g',     ico:'🟤', tag:'Especia · Molido',  desc:'Polvo fino de comino para sazonar'},
+  {nombre:'Orégano Mexicano',      cat:'Especia', pic:'1', uni:'g',     ico:'🌿', tag:'Especia · Hierba',  desc:'Más intenso que el mediterráneo'},
+  {nombre:'Orégano Seco',          cat:'Especia', pic:'1', uni:'g',     ico:'🌿', tag:'Especia · Hierba',  desc:'Para pizzas, carnes y guisos'},
+  {nombre:'Pimienta Negra Entera', cat:'Especia', pic:'2', uni:'g',     ico:'⚫', tag:'Especia · Semilla', desc:'Grano entero de pimienta negra'},
+  {nombre:'Pimienta Negra Molida', cat:'Especia', pic:'2', uni:'g',     ico:'⚫', tag:'Especia · Molido',  desc:'Para sazonar cualquier platillo'},
+  {nombre:'Pimienta Blanca',       cat:'Especia', pic:'2', uni:'g',     ico:'⚪', tag:'Especia · Semilla', desc:'Sabor delicado, ideal para salsas blancas'},
+  {nombre:'Pimienta Gorda',        cat:'Especia', pic:'2', uni:'g',     ico:'🟤', tag:'Especia · Semilla', desc:'Allspice, mezcla anís-canela-clavo'},
+  {nombre:'Canela en Rama',        cat:'Especia', pic:'1', uni:'g',     ico:'🟫', tag:'Especia · Entera',  desc:'Canela mexicana, suave y aromática'},
+  {nombre:'Canela Molida',         cat:'Especia', pic:'1', uni:'g',     ico:'🟫', tag:'Especia · Molido',  desc:'Para atoles, postres y moles'},
+  {nombre:'Clavo de Olor',         cat:'Especia', pic:'1', uni:'g',     ico:'🌸', tag:'Especia · Entero',  desc:'Aromático e intenso, para moles y ponches'},
+  {nombre:'Clavo Molido',          cat:'Especia', pic:'1', uni:'g',     ico:'🌸', tag:'Especia · Molido',  desc:'Para adobos, moles y marinadas'},
+  {nombre:'Laurel Seco',           cat:'Especia', pic:'1', uni:'g',     ico:'🌿', tag:'Especia · Hoja',    desc:'Hojas de laurel para sopas y guisos'},
+  {nombre:'Tomillo Seco',          cat:'Especia', pic:'1', uni:'g',     ico:'🌿', tag:'Especia · Hierba',  desc:'Aromático, para carnes y caldos'},
+  {nombre:'Mejorana',              cat:'Especia', pic:'1', uni:'g',     ico:'🌿', tag:'Especia · Hierba',  desc:'Dulce y floral, para tamales y caldos'},
+  {nombre:'Epazote Seco',          cat:'Especia', pic:'1', uni:'g',     ico:'🌿', tag:'Especia · Hierba',  desc:'Imprescindible en frijoles y tamales'},
+  {nombre:'Cúrcuma',               cat:'Especia', pic:'1', uni:'g',     ico:'🟡', tag:'Especia · Raíz',    desc:'Colorante natural, sabor terroso'},
+  {nombre:'Jengibre en Polvo',     cat:'Especia', pic:'2', uni:'g',     ico:'🟡', tag:'Especia · Molido',  desc:'Para marinadas, postres y bebidas'},
+  {nombre:'Ajo en Polvo',          cat:'Especia', pic:'1', uni:'g',     ico:'⚪', tag:'Especia · Molido',  desc:'Para sazonar carnes y salsas rápidamente'},
+  {nombre:'Cebolla en Polvo',      cat:'Especia', pic:'1', uni:'g',     ico:'⚪', tag:'Especia · Molido',  desc:'Sazonador práctico para guisos'},
+  {nombre:'Achiote en Pasta',      cat:'Especia', pic:'1', uni:'g',     ico:'🔴', tag:'Especia · Pasta',   desc:'Colorante y sazonador yucateco'},
+  {nombre:'Achiote Molido',        cat:'Especia', pic:'1', uni:'g',     ico:'🔴', tag:'Especia · Molido',  desc:'Polvo del annatto, para cochinita'},
+  {nombre:'Azafrán Mexicano',      cat:'Especia', pic:'1', uni:'g',     ico:'🟡', tag:'Especia · Flor',    desc:'Cártamo, para arroces y paellas'},
+  {nombre:'Hierba Santa Seca',     cat:'Especia', pic:'1', uni:'g',     ico:'🌿', tag:'Especia · Hierba',  desc:'Aroma anisado, para tamales y pescados'},
+  {nombre:'Mezcla para Birria',    cat:'Especia', pic:'3', uni:'g',     ico:'🟤', tag:'Especia · Blend',   desc:'Mix de chiles y especias para birria'},
+  {nombre:'Mezcla para Mole',      cat:'Especia', pic:'2', uni:'g',     ico:'🟤', tag:'Especia · Blend',   desc:'Blend de chiles, especias y cacao'},
+  {nombre:'Sazonador para Carne',  cat:'Especia', pic:'2', uni:'g',     ico:'🟤', tag:'Especia · Blend',   desc:'Mix listo para marinar carnes'},
+  // ── SEMILLAS ──
+  {nombre:'Semilla de Cilantro',   cat:'Semilla', pic:'1', uni:'g',     ico:'🌰', tag:'Semilla · Entera',  desc:'Aromática, para guisos y marinadas'},
+  {nombre:'Semilla de Mostaza',    cat:'Semilla', pic:'2', uni:'g',     ico:'🟡', tag:'Semilla · Entera',  desc:'Amarilla o negra, para encurtidos'},
+  {nombre:'Semilla de Comino',     cat:'Semilla', pic:'1', uni:'g',     ico:'🌰', tag:'Semilla · Entera',  desc:'Entera para tostar y moler al momento'},
+  {nombre:'Semilla de Calabaza',   cat:'Semilla', pic:'1', uni:'kg',    ico:'🌿', tag:'Semilla · Pepita',  desc:'Pepita verde, para moles verdes'},
+  {nombre:'Pepita Verde',          cat:'Semilla', pic:'1', uni:'kg',    ico:'🌿', tag:'Semilla · Pepita',  desc:'Base del mole verde y pipián'},
+  {nombre:'Pepita con Cáscara',    cat:'Semilla', pic:'1', uni:'kg',    ico:'🌿', tag:'Semilla · Entera',  desc:'Con cáscara, para tostar y botana'},
+  {nombre:'Ajonjolí Blanco',       cat:'Semilla', pic:'1', uni:'g',     ico:'⚪', tag:'Semilla · Ajonjolí',desc:'Para panes, moles y decoración'},
+  {nombre:'Ajonjolí Negro',        cat:'Semilla', pic:'1', uni:'g',     ico:'⚫', tag:'Semilla · Ajonjolí',desc:'Más intenso, para decorar y sazonar'},
+  {nombre:'Semilla de Linaza',     cat:'Semilla', pic:'1', uni:'g',     ico:'🟤', tag:'Semilla · Linaza',  desc:'Nutritiva, para agua fresca y panes'},
+  {nombre:'Semilla de Chía',       cat:'Semilla', pic:'1', uni:'g',     ico:'⚫', tag:'Semilla · Chía',    desc:'Para aguas, yogurt y postres'},
+  {nombre:'Amaranto',              cat:'Semilla', pic:'1', uni:'g',     ico:'🟡', tag:'Semilla · Grano',   desc:'Para alegrías, atoles y granola'},
+  {nombre:'Cacahuate con Chile',   cat:'Semilla', pic:'3', uni:'kg',    ico:'🥜', tag:'Semilla · Botana',  desc:'Cacahuates enchilados, snack clásico'},
+  {nombre:'Cacahuate Natural',     cat:'Semilla', pic:'1', uni:'kg',    ico:'🥜', tag:'Semilla · Botana',  desc:'Para botanear, moles y salsas'},
+  {nombre:'Nuez Moscada Entera',   cat:'Semilla', pic:'1', uni:'g',     ico:'🟤', tag:'Semilla · Entera',  desc:'Para rallar al momento, muy aromática'},
+  {nombre:'Semilla de Hinojo',     cat:'Semilla', pic:'1', uni:'g',     ico:'🌿', tag:'Semilla · Entera',  desc:'Sabor anisado, para panes y chorizos'},
+  {nombre:'Cardamomo en Vaina',    cat:'Semilla', pic:'1', uni:'g',     ico:'🌿', tag:'Semilla · Vaina',   desc:'Aromático, para postres y bebidas'},
+  {nombre:'Alcaravea',             cat:'Semilla', pic:'1', uni:'g',     ico:'🌰', tag:'Semilla · Entera',  desc:'Similar al comino, para panes y quesos'},
+  // ── SALSAS ──
+  {nombre:'Salsa Verde Taquera',   cat:'Salsa',   pic:'3', uni:'litro', ico:'🫙', tag:'Salsa · Artesanal', desc:'Tomatillo, chile serrano y cilantro'},
+  {nombre:'Salsa Roja Casera',     cat:'Salsa',   pic:'3', uni:'litro', ico:'🫙', tag:'Salsa · Artesanal', desc:'Jitomate asado, guajillo y especias'},
+  {nombre:'Salsa Habanero',        cat:'Salsa',   pic:'5', uni:'litro', ico:'🫙', tag:'Salsa · Extrema',   desc:'Para valientes, habanero puro'},
+  {nombre:'Salsa Macha',           cat:'Salsa',   pic:'4', uni:'litro', ico:'🫙', tag:'Salsa · Con aceite',desc:'Chile seco, aceite, ajo y cacahuate'},
+  {nombre:'Salsa Negra',           cat:'Salsa',   pic:'4', uni:'litro', ico:'🫙', tag:'Salsa · Ahumada',   desc:'Chipotle y chile negro en aceite'},
+  {nombre:'Salsa de Árbol',        cat:'Salsa',   pic:'4', uni:'litro', ico:'🫙', tag:'Salsa · Picante',   desc:'Con chile de árbol seco tostado'},
+  // ── OTROS ──
+  {nombre:'Mezcla de Chiles Secos',cat:'Otro',    pic:'3', uni:'bolsa', ico:'🌶', tag:'Mix · Blend',       desc:'Surtido de chiles secos para mole'},
+  {nombre:'Sal de Chile',          cat:'Otro',    pic:'3', uni:'g',     ico:'🧂', tag:'Condimento',        desc:'Sal de mar con chile piquín, para frutas'},
+  {nombre:'Cacao Puro en Polvo',   cat:'Otro',    pic:'1', uni:'g',     ico:'🍫', tag:'Para moles',        desc:'Cacao criollo, para moles y bebidas'},
+  {nombre:'Tamarindo',             cat:'Otro',    pic:'1', uni:'kg',    ico:'🟤', tag:'Fruta seca',        desc:'Para aguas, dulces y salsas agridulces'},
+];
+
+
+let acIdx = -1;
+let acVisible = false;
+
+function acInput(q) {
+  const drop = document.getElementById('ac-drop');
+  acIdx = -1;
+  if (!q || q.length < 1) { drop.classList.remove('open'); acVisible=false; return; }
+
+  const lower = q.toLowerCase();
+  // Buscar en catálogo fijo
+  const fromCat = CATALOGO.filter(x => x.nombre.toLowerCase().includes(lower));
+  // Buscar en productos ya cargados que no están en el catálogo
+  const fromExist = prods
+    .filter(p => p.nombre.toLowerCase().includes(lower) && !CATALOGO.find(c => c.nombre.toLowerCase() === p.nombre.toLowerCase()))
+    .map(p => ({nombre:p.nombre, cat:p.categoria, pic:p.picante, uni:p.unidad, ico:'🌶', tag:'Ya registrado', desc:''}));
+
+  const all = [...fromExist, ...fromCat].slice(0, 8);
+
+  if (!all.length) {
+    drop.innerHTML = `<div class="ac-empty">Sin sugerencias — escribe el nombre del producto</div>`;
+    drop.classList.add('open'); acVisible=true; return;
+  }
+
+  const highlight = (txt) => txt.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>');
+
+  drop.innerHTML = all.map((x, i) => `
+    <div class="ac-item" data-idx="${i}" onmousedown="acSelect('${x.nombre.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${x.cat}','${x.pic}','${x.uni}')">
+      <span class="ac-item-ico">${x.ico}</span>
+      <div class="ac-item-main">
+        <div class="ac-item-name">${highlight(x.nombre)}</div>
+        ${x.desc ? `<div class="ac-item-meta">${x.desc}</div>` : ''}
+      </div>
+      <span class="ac-item-tag">${x.tag}</span>
+    </div>
+  `).join('') + `<div class="ac-footer">↑↓ navegar · Enter seleccionar · Esc cerrar</div>`;
+
+  drop.classList.add('open'); acVisible=true;
+}
+
+function acSelect(nombre, cat, pic, uni) {
+  document.getElementById('mp-nombre').value = nombre;
+  // Autocompletar categoría, picante y unidad si están vacíos o son default
+  if (cat) document.getElementById('mp-cat').value = cat;
+  if (pic) document.getElementById('mp-pic').value = pic;
+  if (uni) document.getElementById('mp-uni').value = uni;
+  document.getElementById('ac-drop').classList.remove('open');
+  acVisible = false; acIdx = -1;
+  // Enfocar precio
+  setTimeout(() => document.getElementById('mp-precio').focus(), 50);
+}
+
+function acKey(e) {
+  const drop = document.getElementById('ac-drop');
+  if (!acVisible) return;
+  const items = drop.querySelectorAll('.ac-item');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acIdx = Math.min(acIdx + 1, items.length - 1);
+    items.forEach((it, i) => it.classList.toggle('focused', i === acIdx));
+    items[acIdx]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acIdx = Math.max(acIdx - 1, 0);
+    items.forEach((it, i) => it.classList.toggle('focused', i === acIdx));
+    items[acIdx]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'Enter' && acIdx >= 0) {
+    e.preventDefault();
+    items[acIdx]?.dispatchEvent(new MouseEvent('mousedown'));
+  } else if (e.key === 'Escape') {
+    drop.classList.remove('open'); acVisible = false; acIdx = -1;
+  }
+}
+
+// Cerrar al hacer clic fuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ac-wrap')) {
+    document.getElementById('ac-drop')?.classList.remove('open');
+    acVisible = false;
+  }
+});
+
+// ══ INIT ══
+document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+updateSidebar();
+renderDash();
+</script>
+</body>
+</html>
